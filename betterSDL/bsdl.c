@@ -9,8 +9,8 @@
 
 // check data
 char bsdl_init = 0;
-#define BSDL_INIT_CHECK() CHECK(bsdl_init != 0, "bsdl isn't init, use bsdlInit")
-#define BSDL_INIT_WINDOW_CHECK(win) CHECK(win->is_init, "the window isn't init")
+#define BSDL_INIT_CHECK() CCB_CHECK(bsdl_init != 0, "bsdl isn't init, use bsdlInit")
+#define BSDL_INIT_WINDOW_CHECK(win) CCB_CHECK(win->is_init, "the window isn't init")
 
 // utils macros
 #define RGBAtoUINT(r, g, b, a) ( ((bsdl_color)b) | ((bsdl_color)g) << 8 |  ((bsdl_color)r) << 16 |  ((bsdl_color)a) << 24)
@@ -30,7 +30,7 @@ inline void cartesian2bary(float x1, float y1, float x2, float y2, float x3, flo
 // mem management
 void* memset32(void* dest, unsigned int value, size_t count) {
 
-    NOTNULL(dest, "Cant set on a null pointer");
+    CCB_NOTNULL(dest, "Cant set on a null pointer");
 
     for (size_t i=0; i<count; i++)
         ((unsigned int*)dest)[i] = value;
@@ -53,12 +53,12 @@ void bsdlResetWindow(bsdl_window* win, unsigned char  r,unsigned char  g, unsign
     bsdl_color color = RGBAtoUINT(r, g, b, a);
 
     memset32(win->texture, color, win->height*win->width);
-    NOTNULL(win->texture, "cant't reset bsdl texture with color: (%x) r: %x g: %x b: %x a: %x",
+    CCB_NOTNULL(win->texture, "cant't reset bsdl texture with color: (%x) r: %x g: %x b: %x a: %x",
             color, r, g, b, a)
 
 
-    INFO("BSDM windows reset with color: (%x) r: %x g: %x b: %x a: %x",
-            color, r, g, b, a)
+    CCB_INFO("BSDL windows reset with color: (%x) r: %x g: %x b: %x a: %x",
+              color, r, g, b, a)
 
 }
 
@@ -113,9 +113,8 @@ void bsdlDrawPixelXY(bsdl_window* win, int x, int y, unsigned char r, unsigned c
                 }
 
                 default:
-                    NOT_IMPLEMENTED()
-                }
-            
+                    CCB_NOT_IMPLEMENTED()
+                } 
         }
     }
     //INFO("BSDM draw pixell with color: (%x) r: %x g: %x b: %x a: %x",
@@ -148,7 +147,7 @@ void bsdlDrawLineXY(bsdl_window* win, int x1, int y1, int x2, int y2, unsigned c
         }
     }
 
-    INFO("BSDM draw line with color: (%x) r: %x g: %x b: %x a: %x",
+    CCB_INFO("BSDM draw line with color: (%x) r: %x g: %x b: %x a: %x",
            RGBAtoUINT(r, g, b, a), r, g, b, a) 
 
 }
@@ -165,7 +164,7 @@ void bsdlDrawFilledCricleXY(bsdl_window* win, int x, int y, float radius, unsign
         }
     }
     
-    INFO("BSDM draw circle with color: (%x) r: %x g: %x b: %x a: %x",
+    CCB_INFO("BSDM draw circle with color: (%x) r: %x g: %x b: %x a: %x",
            RGBAtoUINT(r, g, b, a), r, g, b, a)
 
 }
@@ -181,15 +180,13 @@ void bsdlDrawAllignedFilledRectXY(bsdl_window* win, int x, int y, int w, int h, 
         }
     }
     
-    INFO("BSDM draw rect with color: (%x) r: %x g: %x b: %x a: %x",
+    CCB_INFO("BSDM draw rect with color: (%x) r: %x g: %x b: %x a: %x",
            RGBAtoUINT(r, g, b, a), r, g, b, a)    
-
 }
 
 // global
 void bsdlInit(void) {
-    
-    CHECK(SDL_Init(SDL_INIT_EVERYTHING) == 0, "failed to init sdl2");
+    CCB_CHECK(SDL_Init(SDL_INIT_EVERYTHING) == 0, "failed to init sdl2");
     bsdl_init = 1;
 }
 
@@ -206,7 +203,7 @@ bsdl_window* bsdlInitWindow(size_t w, size_t h, char* name) {
 
     // init bsdl    
     bsdl_window* window = (bsdl_window*)malloc(sizeof(bsdl_window));
-    NOTNULL(window, "Unable to allocate a new window");
+    CCB_NOTNULL(window, "Unable to allocate a new window");
 
     window->is_init = 1;
 
@@ -215,9 +212,9 @@ bsdl_window* bsdlInitWindow(size_t w, size_t h, char* name) {
 
     // init bsdl texture
     window->texture = (bsdl_color*)malloc(sizeof(bsdl_color)*w*h);
-    NOTNULL(window->texture, "Unable to allocate bsdl texture")
+    CCB_NOTNULL(window->texture, "Unable to allocate bsdl texture")
 
-    INFO("BSDL window init: OK");
+    CCB_INFO("BSDL window init: OK");
 
     // init sdl2
 
@@ -226,20 +223,20 @@ bsdl_window* bsdlInitWindow(size_t w, size_t h, char* name) {
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
                                           w, h, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-    NOTNULL(window->sdl_window, "failed to init sdl2 window")
+    CCB_NOTNULL(window->sdl_window, "failed to init sdl2 window")
 
     // init sdl2 renderer
     window->render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
     window->sdl_renderer = SDL_CreateRenderer(window->sdl_window, -1, window->render_flags);
-    NOTNULL(window->sdl_renderer, "failed to init sdl2 renderer")
+    CCB_NOTNULL(window->sdl_renderer, "failed to init sdl2 renderer")
 
     // init sdl2 texture
     window->sdl_texture = SDL_CreateTexture(window->sdl_renderer, 
                                             SDL_PIXELFORMAT_ARGB8888, 
                                             SDL_TEXTUREACCESS_STREAMING, w, h);
-    NOTNULL(window->sdl_texture, "failed to init sdl2 texture")
-
-    INFO("SDL2 init: OK")
+    
+    CCB_NOTNULL(window->sdl_texture, "failed to init sdl2 texture")
+    CCB_INFO("SDL2 init: OK")
 
     return window;
 }
@@ -255,7 +252,7 @@ void bsdlUpdateWindow(bsdl_window* win, void (*eventHendler)(SDL_Event, bsdl_win
     while (SDL_PollEvent(&event)) {    
         // use callback functions
         if (eventHendler != NULL) {
-            INFO("called back: event type:%lu", event.type)
+            CCB_INFO("called back: event type:%lu", event.type)
             (eventHendler)(event, win, callBackData);
         }
 
@@ -272,7 +269,7 @@ void bsdlUpdateWindow(bsdl_window* win, void (*eventHendler)(SDL_Event, bsdl_win
         }
     }
 
-    INFO("SDL2 event Loop: OK")
+    CCB_INFO("SDL2 event Loop: OK")
 
     // copy texture
     SDL_UpdateTexture(win->sdl_texture, NULL, win->texture,
@@ -281,12 +278,12 @@ void bsdlUpdateWindow(bsdl_window* win, void (*eventHendler)(SDL_Event, bsdl_win
     // render sdl2
     SDL_RenderClear(win->sdl_renderer);
 
-    CHECK(SDL_RenderCopy(win->sdl_renderer, win->sdl_texture, NULL, NULL) == 0, "Can't render texture");
+    CCB_CHECK(SDL_RenderCopy(win->sdl_renderer, win->sdl_texture, NULL, NULL) == 0, "Can't render texture");
 
     SDL_SetRenderDrawColor(win->sdl_renderer, 0x00, 0x00, 0x00, 0xFF);
     SDL_RenderPresent(win->sdl_renderer);
 
-    INFO("SLD2 render: OK")
+    CCB_INFO("SLD2 render: OK")
 
 }
 
@@ -294,18 +291,18 @@ void bsdlUpdateWindow(bsdl_window* win, void (*eventHendler)(SDL_Event, bsdl_win
 void bsdlFreeWindow(bsdl_window* win) {
 
     if (win->is_init == 0)
-        WARNING("freeing an uninitialized window")
+        CCB_WARNING("freeing an uninitialized window")
 
     // free sdl2
     SDL_DestroyTexture(win->sdl_texture);
     SDL_DestroyRenderer(win->sdl_renderer);
     SDL_DestroyWindow(win->sdl_window);
 
-    INFO("SDL2 free: OK");
+    CCB_INFO("SDL2 free: OK");
 
     // free bsdl
     win->is_init = 0;
     free(win->texture);
     free(win);
-    INFO("BSDL window free: OK");
+    CCB_INFO("BSDL window free: OK");
 }

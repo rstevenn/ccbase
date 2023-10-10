@@ -18,5 +18,4 @@ float onePten(void);
                     BAKE(onePtow) \
                     BAKETYPE(onePten, float)
 
-
 #endif

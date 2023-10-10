@@ -1,6 +1,9 @@
 #ifdef BSDL_DEBUG
     #define CCB_LOGLEVEL 2
     #define CCB_LOGTYPE 2
+#else
+    #define CCB_LOGLEVEL 0
+    #define CCB_LOGTYPE 0
 #endif
 
 

@@ -43,6 +43,16 @@ void bake_impl(void* (fnct)(size_t*), char* name, FILE* fp) {
                                 }
 
 
+#define BAKE_EXISTING_TYPE(type, func)
+int bakeint(int (func)(void), char func_name[], FILE* fp) {
+    printf("backing %s...\n", func_name);
+
+    fprintf(fp, "int %s(size_t* size) {\n", func_name);
+    fprintf(fp, "   return %s();\n", func_name);
+    fprintf(fp, "}\n\n");
+}
+
+
 
 void init_file(FILE* fp) {
     fprintf(fp, "#include <stdlib.h>\n");
@@ -58,7 +68,7 @@ int main() {
 #define BAKE(func) bake_impl(func, #func, fp);
 #define BAKETYPE(func, type) BAKETYPEIMPL(func, type)
 
-#define BAKEINT(func) 
+#define BAKEINT(func) bakeint(func, #func, fp);
 #define BAKELONG(func)
 #define BAKELONGLONG(func)
 

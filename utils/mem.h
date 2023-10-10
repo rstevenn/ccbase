@@ -9,7 +9,7 @@
 #define gb 1024*mb
 
 typedef struct _ccb_arena_type {
-    char* data;
+    const char* data;
 
     size_t capacity;
 
@@ -21,16 +21,25 @@ typedef struct _ccb_arena_type {
     #define CCB_ARENA_CAPACITY 16*kb
 #endif
 
+#ifndef CCB_ARENA_MALLOC
+    #define CCB_ARENA_MALLOC malloc
+#endif
+
+
+#ifndef CCB_ARENA_FREE
+    #define CCB_ARENA_FREE free
+#endif
+
 #define CCB_ARENA_IMPL 
 #ifdef CCB_ARENA_IMPL
 
 #include "../logs/log.h"
 
 ccb_arena* ccb_init_arena(void) {
-    ccb_arena* arena = (ccb_arena*)malloc(sizeof(ccb_arena));
+    ccb_arena* arena = (ccb_arena*)CCB_ARENA_MALLOC(sizeof(ccb_arena));
     CCB_NOTNULL(arena, "can't allocate memory for a new memory block metadat")
 
-    arena->data = (char*)malloc(CCB_ARENA_CAPACITY);
+    arena->data = (char*)CCB_ARENA_MALLOC(CCB_ARENA_CAPACITY);
     arena->capacity = CCB_ARENA_CAPACITY;
     CCB_NOTNULL(arena->data, "can't allocate a new memory block")
     arena->next = NULL;
@@ -69,10 +78,10 @@ void ccb_arena_free(ccb_arena* arena) {
     ccb_arena* previous_arena = arena;
 
     do {
-        free(current_arena->data);
+        CCB_ARENA_FREE(current_arena->data);
         previous_arena = current_arena;
         current_arena = current_arena->next;
-        free(previous_arena);
+        CCB_ARENA_FREE(previous_arena);
     } while (current_arena != NULL);
 }
 

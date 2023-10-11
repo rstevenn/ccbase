@@ -56,6 +56,7 @@ void ccb_nos_arena_free(unsigned char* ram, ccb_arena* arena);
 #define CCB_ARENA_IMPL
 #ifdef CCB_ARENA_IMPL
 
+#define CCB_LOGLEVEL 2
 #include "../logs/log.h"
 
 // USING CCB_ARENA_MALLOC CCB_ARENA_MALLOC
@@ -177,17 +178,21 @@ ccb_arena* ccb_init_nos_arena(unsigned char* ram) {
         status_index++;
         block_index++;
 
-        if (status_index == (unsigned char*)meta_data.blocks_status) {
+        if (status_index >= (unsigned char*)meta_data.blocks) {
             CCB_WARNING("No memory available to allocate")
             return NULL;
         }
     }
 
     // write data
-    ccb_arena* arena = (ccb_arena*)meta_data.blocks +  block_index*(CCB_ARENA_CAPACITY+sizeof(ccb_arena)); 
+    printf("arena id: %llu\n", block_index);
+    ccb_arena* arena = (ccb_arena*) ((size_t)meta_data.blocks +  block_index*(CCB_ARENA_CAPACITY+sizeof(ccb_arena))); 
+    printf("arena pos: %p\n", arena);
+    printf("arena rel pos: %p\n", (size_t)arena-(size_t)ram);
     arena->capacity = CCB_ARENA_CAPACITY;
     arena->next = NULL;
     arena->data = (void*)(arena + sizeof(ccb_arena));
+    printf("arena ok\n");
 
     // update the status 
     *status_index = 1;

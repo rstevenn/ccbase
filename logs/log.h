@@ -1,3 +1,6 @@
+#ifndef __CCB_LOG_H__
+#define __CCB_LOG_H__
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -125,5 +128,6 @@ void ccb_CloseLogFile();
     #define CCB_NOTNULL(ptr, ...) CCB_PNOTNULL(ptr, __VA_ARGS__)
     #define CCB_CHECK(cond, ...) CCB_PCHECK(cond, __VA_ARGS__)
 
+#endif
 #endif
 #endif

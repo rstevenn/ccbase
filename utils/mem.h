@@ -115,12 +115,12 @@ void ccb_arena_free(ccb_arena* arena) {
 
 
 // NO OS dependent version
-typedef struct _ccb_area_ram_data {
+typedef struct _ccb_arena_ram_data {
     void* blocks_status;
     void* blocks;
     size_t max_block_numbers;
     size_t ram_size;
-} ccb_area_ram_data;
+} ccb_arena_ram_data;
 
 
 void ccb_arena_nos_setup_memory(unsigned char* ram, size_t ram_size) {
@@ -129,34 +129,25 @@ void ccb_arena_nos_setup_memory(unsigned char* ram, size_t ram_size) {
         [ccb_area_ram_data, table of allocated blocks, BLock 1, ..., BLock max_block_numbers]
         BLock = <ccb_arena, area_data>
     */
-    ccb_area_ram_data data;
+    ccb_arena_ram_data data;
     data.ram_size = ram_size;
 
     // calculate nb of blocks and adresses
-    data.max_block_numbers = (ram_size - sizeof(ccb_area_ram_data)) / (1 + CCB_ARENA_CAPACITY + sizeof(ccb_arena));
+    data.max_block_numbers = (ram_size - sizeof(ccb_arena_ram_data)) / (1 + CCB_ARENA_CAPACITY + sizeof(ccb_arena));
     CCB_CHECK(data.max_block_numbers > 0, "not enough space for block allocation")
-    data.blocks_status = ram + sizeof(ccb_area_ram_data);
+    data.blocks_status = ram + sizeof(ccb_arena_ram_data);
     data.blocks = (void*)((size_t)data.blocks_status + data.max_block_numbers);
 
     // write to ram
-    ((ccb_area_ram_data*)ram)[0] = data;
+    ((ccb_arena_ram_data*)ram)[0] = data;
 
     // int the block_status
     ccb_arena_nos_reset_ram(ram);
-
-    printf("ram datas:\n");
-    printf("ram size = %llu\n", data.ram_size);
-    printf("max nb blocks = %llu\n", data.max_block_numbers);
-
-    printf("ram adresses:\n");
-    printf("ram base= %p\n", ram);
-    printf("blocks status base= %p\n", data.blocks_status);
-    printf("blocks base= %p\n", data.blocks);
 }
 
 
 void ccb_arena_nos_reset_ram(unsigned char* ram) {
-    ccb_area_ram_data meta_data = ((ccb_area_ram_data*)ram)[0];
+    ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
 
     // write all 0 on the blocks status table
     unsigned char* status_index = meta_data.blocks_status;
@@ -168,7 +159,7 @@ void ccb_arena_nos_reset_ram(unsigned char* ram) {
 
 
 ccb_arena* ccb_init_nos_arena(unsigned char* ram) {
-    ccb_area_ram_data meta_data = ((ccb_area_ram_data*)ram)[0];
+    ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
 
     // found a free block
     unsigned char* status_index = meta_data.blocks_status;
@@ -185,14 +176,11 @@ ccb_arena* ccb_init_nos_arena(unsigned char* ram) {
     }
 
     // write data
-    printf("arena id: %llu\n", block_index);
     ccb_arena* arena = (ccb_arena*) ((size_t)meta_data.blocks +  block_index*(CCB_ARENA_CAPACITY+sizeof(ccb_arena))); 
-    printf("arena pos: %p\n", arena);
-    printf("arena rel pos: %p\n", (size_t)arena-(size_t)ram);
+
     arena->capacity = CCB_ARENA_CAPACITY;
     arena->next = NULL;
     arena->data = (void*)(arena + sizeof(ccb_arena));
-    printf("arena ok\n");
 
     // update the status 
     *status_index = 1;
@@ -231,7 +219,7 @@ void ccb_nos_arena_reset(ccb_arena* arena) {
 
 
 void ccb_nos_arena_free(unsigned char* ram, ccb_arena* arena) {
-    ccb_area_ram_data meta_data = ((ccb_area_ram_data*)ram)[0];
+    ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
     ccb_arena* current_arena = arena;
 
     do {

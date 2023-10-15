@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 #define CCB_ARENA_IMPL
@@ -6,11 +7,14 @@
 #include "../utils/mem.h"
 #include "../logs/log.h"
 
+#define NOS_TEST_VALIDATE(func, wanted) { if (func() == wanted) { printf("[KO] %s();\n", #func); dump_ram(#func ".txt");} else {printf("[OK] %s();\n", #func);}}
+
 #define RAM_SIZE mb
 unsigned char ram[RAM_SIZE];
 
+
 void dump_ram(char name[]) {
-    ccb_area_ram_data meta_data = ((ccb_area_ram_data*)ram)[0];
+    ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
     
     FILE* fp = fopen(name, "w");
     
@@ -39,8 +43,94 @@ void dump_ram(char name[]) {
 }
 
 
+void reset_ram(void) {
+    memset(ram, 0, RAM_SIZE);
+}
+
+
+int nos_test_ram_setup(void) {
+    // setup
+    reset_ram();
+
+    // act
+    ccb_arena_nos_setup_memory(ram, RAM_SIZE);
+
+    // check meta_data
+    ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
+
+    if (meta_data.ram_size != RAM_SIZE) return 0;
+    if (meta_data.max_block_numbers != (RAM_SIZE - sizeof(ccb_arena_ram_data)) / (1 + CCB_ARENA_CAPACITY + sizeof(ccb_arena))) return 0;
+    if (meta_data.blocks_status != &meta_data + sizeof(ccb_arena_ram_data)) return 0;
+    if (meta_data.blocks_status != &meta_data + sizeof(ccb_arena_ram_data)+CCB_ARENA_CAPACITY) return 0;
+
+    // check allocation table
+    unsigned char* status_index = meta_data.blocks_status;
+    while (status_index < (unsigned char*)meta_data.blocks_status) {
+        if (*status_index) return 0;
+        status_index++;
+    }
+
+    // reset
+    reset_ram();
+    return 1;
+}
+
+
+int nos_test_init_one_area(void) {
+    // setup
+    reset_ram();
+
+    // act
+    ccb_arena_nos_setup_memory(ram, RAM_SIZE);
+    ccb_arena* arena = ccb_init_nos_arena(ram);
+
+    // check meta_data
+    ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
+
+    if (meta_data.ram_size != RAM_SIZE) return 0;
+    if (meta_data.max_block_numbers != (RAM_SIZE - sizeof(ccb_arena_ram_data)) / (1 + CCB_ARENA_CAPACITY + sizeof(ccb_arena))) return 0;
+    if (meta_data.blocks_status != &meta_data + sizeof(ccb_arena_ram_data)) return 0;
+    if (meta_data.blocks_status != &meta_data + sizeof(ccb_arena_ram_data)+CCB_ARENA_CAPACITY) return 0;
+
+    // check allocation table
+    unsigned char* status_index = meta_data.blocks_status;
+    size_t nb_ones = 0;
+    size_t one_id;
+
+
+    while (status_index < (unsigned char*)meta_data.blocks_status) {
+        if (*status_index) {
+            nb_ones++;
+            if (nb_ones > 1) return 0;
+        }
+    
+        status_index++;
+    }
+
+
+
+    // reset
+    reset_ram();
+    return 1;
+}
+
+
+void test_nos(void) {
+    printf("Test no os area allocator:\n");
+
+    NOS_TEST_VALIDATE(nos_test_ram_setup, 1)
+    NOS_TEST_VALIDATE(nos_test_init_one_area, 1)
+
+
+}
+
+
 int main( int argc, char* argv[]) {
-    printf("Test mem\n");
+
+    test_nos();
+
+    return 0;
+    /*printf("Test mem\n");
     printf("setup ram..\n");
     ccb_arena_nos_setup_memory(ram, RAM_SIZE);
     dump_ram("ram0.txt");
@@ -84,7 +174,7 @@ int main( int argc, char* argv[]) {
 
 
     return 0;
-    /*
+    
     ccb_arena* arena = ccb_init_arena();
     ccb_arena_malloc(arena, 256);
     ccb_arena_malloc(arena, 4*kb);

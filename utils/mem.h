@@ -231,8 +231,6 @@ void ccb_nos_arena_free(unsigned char* ram, ccb_arena* arena) {
     } while (current_arena != NULL);
 }
 
+
 #endif
-
-
-
 #endif

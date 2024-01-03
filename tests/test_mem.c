@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
+#include <inttypes.h>  
 
 #define CCB_ARENA_IMPL
 //#define CCB_ARENA_CAPACITY kb
@@ -20,13 +20,13 @@ void dump_ram(char name[]) {
     
     fprintf(fp, "metadata:\n");
     
-    fprintf(fp, "ram size = %llu\n", meta_data.ram_size);
-    fprintf(fp, "max nb blocks = %llu\n", meta_data.max_block_numbers);
+    fprintf(fp, "ram size = %"PRIu64"\n", meta_data.ram_size);
+    fprintf(fp, "max nb blocks = %"PRIu64"\n", meta_data.max_block_numbers);
 
     fprintf(fp, "ram adresses:\n");
-    fprintf(fp, "ram base= %p\n", ram-ram);
-    fprintf(fp, "blocks status base= %p\n", (size_t)meta_data.blocks_status - (size_t)ram);
-    fprintf(fp, "blocks base= %p\n\n", (size_t)meta_data.blocks - (size_t)ram);
+    fprintf(fp, "ram base= %p\n", (void*)(ram-ram));
+    fprintf(fp, "blocks status base= %p\n", (void*)meta_data.blocks_status - (size_t)ram);
+    fprintf(fp, "blocks base= %p\n\n", (void*)meta_data.blocks - (size_t)ram);
 
 
     fprintf(fp, "raw_data:\n");
@@ -35,7 +35,7 @@ void dump_ram(char name[]) {
 
         if (i > 0) {
             if ((i+1)%16==0) fprintf(fp, "\n");
-            if ((i+1)%1024==0) {fprintf(fp, "\n"); fprintf(fp, "%p:\n" , (size_t)&ram[i] - (size_t)ram );}
+            if ((i+1)%1024==0) {fprintf(fp, "\n"); fprintf(fp, "%p:\n" , (void*)&ram[i] - (size_t)ram );}
         }
     }
 

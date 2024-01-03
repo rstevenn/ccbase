@@ -30,7 +30,7 @@ int main() {
     int a;
     ccb_maybe_t out = bar();
     
-    if (!out.ok) printf(out.msg);
+    if (!out.ok) printf("%s", out.msg);
     if (out.ok) printf("ok\n");
 
     return 0;

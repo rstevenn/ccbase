@@ -2,11 +2,13 @@
 #define __MEM_H__
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #define byte sizeof(char)
 #define kb 1024*byte
 #define mb 1024*kb
 #define gb 1024*mb
+#define tb 1024*gb
 
 /*
     Arena allocator
@@ -15,7 +17,7 @@
 typedef struct _ccb_arena_type {
     unsigned char* data;
 
-    size_t capacity;
+    uint64_t capacity;
 
     struct _ccb_arena_type* next;
 } ccb_arena;
@@ -23,17 +25,17 @@ typedef struct _ccb_arena_type {
 
 // custom malloc/free version
 ccb_arena* ccb_init_arena(void);
-void* ccb_arena_malloc(ccb_arena* arena, size_t size);
+void* ccb_arena_malloc(ccb_arena* arena, uint64_t size);
 
 void ccb_arena_reset(ccb_arena* arena);
 void ccb_arena_free(ccb_arena* arena);
 
 // no os version
-void ccb_arena_nos_setup_memory(unsigned char* ram, size_t ram_size);
+void ccb_arena_nos_setup_memory(unsigned char* ram, uint64_t ram_size);
 void ccb_arena_nos_reset_ram(unsigned char* ram);
 
 ccb_arena* ccb_init_nos_arena(unsigned char* ram);
-void* ccb_nos_arena_malloc(unsigned char* ram, ccb_arena* arena, size_t size);
+void* ccb_nos_arena_malloc(unsigned char* ram, ccb_arena* arena, uint64_t size);
 
 void ccb_nos_arena_reset(ccb_arena* arena);
 void ccb_nos_arena_free(unsigned char* ram, ccb_arena* arena);
@@ -53,7 +55,6 @@ void ccb_nos_arena_free(unsigned char* ram, ccb_arena* arena);
 #endif
 
 // Implementation
-#define CCB_ARENA_IMPL
 #ifdef CCB_ARENA_IMPL
 
 #define CCB_LOGLEVEL 2
@@ -73,7 +74,7 @@ ccb_arena* ccb_init_arena(void) {
 }
 
 
-void* ccb_arena_malloc(ccb_arena* arena, size_t size) {
+void* ccb_arena_malloc(ccb_arena* arena, uint64_t size) {
     if (size > CCB_ARENA_CAPACITY)
         return NULL;
 
@@ -118,12 +119,12 @@ void ccb_arena_free(ccb_arena* arena) {
 typedef struct _ccb_arena_ram_data {
     void* blocks_status;
     void* blocks;
-    size_t max_block_numbers;
-    size_t ram_size;
+    uint64_t max_block_numbers;
+    uint64_t ram_size;
 } ccb_arena_ram_data;
 
 
-void ccb_arena_nos_setup_memory(unsigned char* ram, size_t ram_size) {
+void ccb_arena_nos_setup_memory(unsigned char* ram, uint64_t ram_size) {
 
     /* ram structure
         [ccb_area_ram_data, table of allocated blocks, BLock 1, ..., BLock max_block_numbers]
@@ -136,7 +137,7 @@ void ccb_arena_nos_setup_memory(unsigned char* ram, size_t ram_size) {
     data.max_block_numbers = (ram_size - sizeof(ccb_arena_ram_data)) / (1 + CCB_ARENA_CAPACITY + sizeof(ccb_arena));
     CCB_CHECK(data.max_block_numbers > 0, "not enough space for block allocation")
     data.blocks_status = ram + sizeof(ccb_arena_ram_data);
-    data.blocks = (void*)((size_t)data.blocks_status + data.max_block_numbers);
+    data.blocks = (void*)(data.blocks_status + data.max_block_numbers);
 
     // write to ram
     ((ccb_arena_ram_data*)ram)[0] = data;
@@ -150,7 +151,7 @@ void ccb_arena_nos_reset_ram(unsigned char* ram) {
     ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
 
     // write all 0 on the blocks status table
-    unsigned char* status_index = meta_data.blocks_status;
+    unsigned char* status_index = (unsigned char*)meta_data.blocks_status;
     while (status_index < (unsigned char*)meta_data.blocks_status) {
         *status_index = 0;
         status_index++;
@@ -162,7 +163,7 @@ ccb_arena* ccb_init_nos_arena(unsigned char* ram) {
     ccb_arena_ram_data meta_data = ((ccb_arena_ram_data*)ram)[0];
 
     // found a free block
-    unsigned char* status_index = meta_data.blocks_status;
+    unsigned char* status_index = (unsigned char*) meta_data.blocks_status;
     size_t block_index = 0;
 
     while (*status_index != 0) {
@@ -180,7 +181,7 @@ ccb_arena* ccb_init_nos_arena(unsigned char* ram) {
 
     arena->capacity = CCB_ARENA_CAPACITY;
     arena->next = NULL;
-    arena->data = (void*)(arena + sizeof(ccb_arena));
+    arena->data = (unsigned char*)((size_t)arena + sizeof(ccb_arena));
 
     // update the status 
     *status_index = 1;
@@ -189,7 +190,7 @@ ccb_arena* ccb_init_nos_arena(unsigned char* ram) {
 }
 
 
-void* ccb_nos_arena_malloc(unsigned char* ram, ccb_arena* arena, size_t size) {
+void* ccb_nos_arena_malloc(unsigned char* ram, ccb_arena* arena, uint64_t size) {
 
     if (size > CCB_ARENA_CAPACITY)
         return NULL;

@@ -21,8 +21,8 @@ void bake_impl(void* (fnct)(size_t*), char* name, FILE* fp) {
     }
     
     fprintf(fp, "};\n");
-    fprintf(fp, "   void* out = malloc(%d);\n", size);
-    fprintf(fp, "   memmove(out, data, %d);\n", size);
+    fprintf(fp, "   void* out = malloc(%ld);\n", size);
+    fprintf(fp, "   memmove(out, data, %ld);\n", size);
     fprintf(fp, "   return out;\n");
 
     fprintf(fp, "}\n\n");
